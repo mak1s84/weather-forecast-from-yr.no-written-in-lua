@@ -17,6 +17,7 @@ end
 local https = require("ssl.https")
 local json = require("lunajson")
 local plaseOfTable = {}
+local workingDir = os.getenv("PWD")
 
 --запрос адреса местоположения
 ::inputLocation:: --Метка запроса
@@ -71,9 +72,6 @@ for i = 1, intCount do
   }
 end
 
--- print("for test ->", tableOfSearch[2][5]["location"])
-
--- lat = tableOfSearch[choice][2]["lat"]
 -- Выводим список местоположений и спрашиваем, какое из них интересует. После выбора печатаем
 -- это местоположение.
 -- Для получение forecast/currenthour, создадим переменную, в которую запишем выбранный location
@@ -133,7 +131,6 @@ if type(headersYrNo) == "table" then
   end
 end
 
--- local ltn12 = require("ltn12")
 https.TIMEOUT = 10
 local forecastCurrentHourTable = {}
 
@@ -148,13 +145,12 @@ local bodyCurentHour, codeCurentHour, headersCurentHour = https.request {
   sink = ltn12.sink.table(forecastCurrentHourTable)
 }
 
-
 --Записываем данные в соответствующие Json файлы
-local openweatherjsonfile = assert(io.open("/home/mak1s/body.json", "w"), "can't open file body.json! may be not exist?")
+local openweatherjsonfile = assert(io.open(workingDir .. "/body.json", "w"), "can't open file body.json! may be not exist?")
 openweatherjsonfile:write(table.concat(resp))
 openweatherjsonfile:close()
 
-local curentHourJsonFile = assert(io.open("/home/mak1s/curentHour.json", "w"),
+local curentHourJsonFile = assert(io.open(workingDir .. "/curentHour.json", "w"),
   "can't open file curentHour.json! may be not exist?")
 curentHourJsonFile:write(table.concat(forecastCurrentHourTable))
 curentHourJsonFile:close()
@@ -168,7 +164,7 @@ local function fileSize(fileName)
   return size
 end
 
-local openWeatherJsonFileAgain = assert(io.open("/home/mak1s/body.json", "r"), "Can't openWeatherJsonFileAgain")
+local openWeatherJsonFileAgain = assert(io.open(workingDir .. "/body.json", "r"), "Can't openWeatherJsonFileAgain")
 local size = fileSize(openWeatherJsonFileAgain)
 if size == 0 then print("File body.json don't download") return end
 local content = assert(openWeatherJsonFileAgain:read("*a"), "Can't read the file")
@@ -176,7 +172,7 @@ local TableOfWeather = {}; -- В эту таблицу конвертирует�
 TableOfWeather = assert(json.decode(content), "Can't decode json file")
 openWeatherJsonFileAgain:close()
 
-local openCurentHourJsonFile = assert(io.open("/home/mak1s/curentHour.json", "r"), "Can't openCurentHourJsonFile")
+local openCurentHourJsonFile = assert(io.open(workingDir .. "/curentHour.json", "r"), "Can't openCurentHourJsonFile")
 local sizeCurentHourJsonFile = fileSize(openCurentHourJsonFile)
 if sizeCurentHourJsonFile == 0 then print("File curentHour.json don't download") return end
 local contentCurentHour = assert(openCurentHourJsonFile:read("*a"), "Can't read the file")
@@ -193,14 +189,8 @@ for i = 1, 20 do
   local timeStr = TableOfWeather["properties"]["timeseries"][i]["time"]
   if string.find(timeStr, systemTime) ~= nil then
     position = i
-    print("position -> " .. position)
   end
 end
-
--- for i, v in pairs(TableOfWeather) do
---   local qw = "air_temperature"
---   if i == qw then print("v ->", v) end
--- end
 
 local tempRightNow = TableOfWeather["properties"]["timeseries"][position]["data"]["instant"]["details"][
     "air_temperature"]
@@ -212,7 +202,6 @@ local min6Temp = TableOfWeather["properties"]["timeseries"][position]["data"]["n
     "air_temperature_min"]
 local cloudAreaFraction = TableOfWeather["properties"]["timeseries"][position]["data"]["instant"]["details"][
     "cloud_area_fraction"]
--- local precipitationAmountOneHours = TableOfWeather["properties"]["timeseries"][position]["data"]["next_1_hours"][
 --     "details"]["precipitation_amount"]
 local symbolCodeOneOurs = TableOfWeather["properties"]["timeseries"][position]["data"]["next_1_hours"]["summary"][
     "symbol_code"]
@@ -229,8 +218,9 @@ local relative_humidity = TableOfWeather["properties"]["timeseries"][position]["
 local wind_speed = TableOfWeather["properties"]["timeseries"][position]["data"]["instant"]["details"]["wind_speed"]
 
 -- Добавляется модуль переводчика
-package.path = package.path .. ';/home/mak1s/Program/lua/training/?.lua;'
-local trans = require("nextOneOurs")
+local packegePath = ";" .. workingDir .. "/?.lua"
+package.path = packegePath 
+local trans = require("translate")
 print()
 -- вычисляется текущее время
 local t = TableOfWeather["properties"]["timeseries"][position]["time"]
@@ -313,137 +303,3 @@ print("Через 6 часов", trans.translate(symbolCodeSixOurs),
   trans.nex6AvgTemp(min6Temp, max6Temp) .. " °C")
 print("Объём осадков", precipitationAmountSixHours .. " мм")
 print("Через 12 часов", trans.translate(symbolCode_12_Hours))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
---[[ local tblSort = {}
-for w in pairs(tableOfSearch) do table.insert(tblSort, w) end
-table.sort(tblSort, function(z, p) return z < p end)
-for _, k in ipairs(tblSort) do
-    print(k)
-    print(printTable(tableOfSearch[k]))
-end ]]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
---[[ local tbl = {}
-tbl.plus = function(x, y) return x + y end
-tbl.minus = function(a, b) return a - b end
-
-
-local func, err = load("return function(a,b) return a+b end")
-if func then
-    local ok, add = pcall(func)
-    if ok then
-        print(add(2, 3))
-    else
-        print("Execution error:", add)
-    end
-else
-    print("Compilation error:", err)
-end
-
-
-
-local function printTable(table)
-    for idx, val in pairs(table) do
-        if val == nil then
-            print(idx)
-        end
-        if type(val) ~= "table" then
-            print(idx, val)
-        else
-            print(idx)
-            printTable(val)
-        end
-    end
-end
-
-local t = {}
-local name = "somebody"
-for i =1 , 10 do
-t[name] = {temp = i, pa = i + 1}
-end
-
-local tbl1 = {
-    time = {
-        "temp" == 12, "pa" == 0.1,
-    },
-    time = {
-        "temp" == 14, "pa" == 1.1,
-    },
-    time = {
-        "temp" == 10.2, "pa" == 0.5
-    }
-}
-table.sort(tbl1, function(a, b) return a.time.temp < b.time.temp end)
-printTable(t) ]]
-
-
-
-
-
-
-
---[[ goto room1 -- начальная комната
-::room1::
-do
-    local move = io.read()
-    if move == "south" then goto room3
-    elseif move == "east" then goto room2
-    else
-        print("invalid move")
-        goto room1 -- остаемся в этой же комнате
-    end
-end
-
-::room2::
-do
-    local move = io.read()
-    if move == "south" then goto room4
-    elseif move == "west" then goto room1
-    else
-        print("invalid move")
-        goto room2
-    end
-end
-
-::room3::
-do
-    local move = io.read()
-    if move == "north" then goto room1
-    elseif move == "east" then goto room4
-    else
-        print("invalid move")
-        goto room3
-    end
-end
-
-::room4::
-do
-    print("Congratulations, you won!")
-end ]]
