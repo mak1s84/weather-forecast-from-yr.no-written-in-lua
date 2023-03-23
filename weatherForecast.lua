@@ -81,7 +81,7 @@ local iChice = false
 local choice
 while not iChice do
   for g = 1, intCount do
-    print(g, tableOfSearch[g][1]["new_location"] .. "\n" .. tableOfSearch[g][5]["location"])
+    print(g, tableOfSearch[g][1]["new_location"] )
   end
   print()
   print("\n", "Look at the list and answer me: what location do you need (enter the number)?")
@@ -146,7 +146,8 @@ local bodyCurentHour, codeCurentHour, headersCurentHour = https.request {
 }
 
 --Записываем данные в соответствующие Json файлы
-local openweatherjsonfile = assert(io.open(workingDir .. "/body.json", "w"), "can't open file body.json! may be not exist?")
+local openweatherjsonfile = assert(io.open(workingDir .. "/body.json", "w"),
+  "can't open file body.json! may be not exist?")
 openweatherjsonfile:write(table.concat(resp))
 openweatherjsonfile:close()
 
@@ -219,7 +220,7 @@ local wind_speed = TableOfWeather["properties"]["timeseries"][position]["data"][
 
 -- Добавляется модуль переводчика
 local packegePath = ";" .. workingDir .. "/?.lua"
-package.path = packegePath 
+package.path = packegePath
 local trans = require("translate")
 print()
 -- вычисляется текущее время
