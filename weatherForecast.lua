@@ -14,7 +14,6 @@ local function printTable(table)
   end
 end
 
-
 local https = require("ssl.https")
 local json = require("lunajson")
 local plaseOfTable = {}
